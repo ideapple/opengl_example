@@ -1,4 +1,4 @@
-# ExternalProject 관련 명령어 셋 추가
+# ExternalProject 관련 명령어 셋 추가.
 include(ExternalProject)
 
 # Dependency 관련 변수 설정
