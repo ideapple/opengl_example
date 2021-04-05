@@ -1,8 +1,8 @@
-set(PROJECT_NAME first_opengl_exameple)
+set(PROJECT_NAME opengl_exameple)
 set(CMAKE_CXX_STANDARD 17)
 
 	
-set(WINDOW_NAME "First opengl Exameple")
+set(WINDOW_NAME "opengl Exameple")
 set(WINDOW_WIDTH 960)
 set(WINDOW_HEIGHT 540)
 
@@ -15,6 +15,9 @@ add_executable(${PROJECT_NAME}
   src/context.cpp src/context.h
   src/buffer.cpp src/buffer.h
   src/vertex_layout.cpp src/vertex_layout.h
+  src/image.cpp src/image.h
+  src/texture.cpp src/texture.h
+
   )
 
 include(Dependency.cmake)
@@ -32,3 +35,5 @@ target_compile_definitions(${PROJECT_NAME} PUBLIC
 
 # Dependency들이 먼저 build 될 수 있게 관계 설정
 add_dependencies(${PROJECT_NAME} ${DEP_LIST})
+
+

@@ -1,4 +1,6 @@
 #include "context.h"
+#include "image.h"
+
 
 ContextUPtr Context::Create() {
   auto context = ContextUPtr(new Context());
@@ -10,10 +12,10 @@ ContextUPtr Context::Create() {
 bool Context::Init() {
 
  float vertices[] = {
-  0.5f, 0.5f, 0.0f, 1.0f, 1.0f, 1.0f, // top right, white
-  0.5f, -0.5f, 0.0f, 0.0f, 0.0f, 0.0f, // bottom right, black
-  -0.5f, -0.5f, 0.0f, 0.3f, 0.7f, 0.4f, // bottom left, mint?
-  -0.5f, 0.5f, 0.0f, 1.0f, 0.0f, 1.0f, // top left, purple
+  0.5f, 0.5f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f, 1.0f,
+  0.5f, -0.5f, 0.0f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f,
+  -0.5f, -0.5f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f,
+  -0.5f, 0.5f, 0.0f, 1.0f, 1.0f, 0.0f, 0.0f, 1.0f,
 };
 
 uint32_t indices[] = { // note that we start from 0!
@@ -23,18 +25,17 @@ uint32_t indices[] = { // note that we start from 0!
 
 m_vertexLayout = VertexLayout::Create();
 
-m_vertexBuffer = Buffer::CreateWithData(GL_ARRAY_BUFFER, GL_STATIC_DRAW, vertices, sizeof(float) * 24);
+m_vertexBuffer = Buffer::CreateWithData(GL_ARRAY_BUFFER, GL_STATIC_DRAW, vertices, sizeof(float) * 32);
 
 //m_vertexLayout->SetAttrib(0, 3, GL_FLOAT, GL_FALSE, sizeof(float) * 3, 0);
-m_vertexLayout->SetAttrib(0, 3, GL_FLOAT, GL_FALSE,
-sizeof(float) * 6, 0);
-m_vertexLayout->SetAttrib(1, 3, GL_FLOAT, GL_FALSE,
-  sizeof(float) * 6, sizeof(float) * 3);
+m_vertexLayout->SetAttrib(0, 3, GL_FLOAT, GL_FALSE,sizeof(float) * 8, 0);
+m_vertexLayout->SetAttrib(1, 3, GL_FLOAT, GL_FALSE, sizeof(float) * 8, sizeof(float) * 3);
+m_vertexLayout->SetAttrib(2, 2, GL_FLOAT, GL_FALSE, sizeof(float) * 8, sizeof(float) * 6);
 
 m_indexBuffer = Buffer::CreateWithData(GL_ELEMENT_ARRAY_BUFFER, GL_STATIC_DRAW, indices, sizeof(uint32_t) * 6);
 
-ShaderPtr vertShader = Shader::CreateFromFile("./shader/per_vertex_color.vs", GL_VERTEX_SHADER);
-ShaderPtr fragShader = Shader::CreateFromFile("./shader/per_vertex_color.fs", GL_FRAGMENT_SHADER);
+ShaderPtr vertShader = Shader::CreateFromFile("./shader/texture.vs", GL_VERTEX_SHADER);
+ShaderPtr fragShader = Shader::CreateFromFile("./shader/texture.fs", GL_FRAGMENT_SHADER);
 if (!vertShader || !fragShader)
     return false;
 SPDLOG_INFO("vertex shader id: {}", vertShader->Get());
@@ -46,25 +47,38 @@ m_program = Program::Create({fragShader, vertShader});
   SPDLOG_INFO("program id: {}", m_program->Get());
 
   	
-auto loc = glGetUniformLocation(m_program->Get(), "color");
-m_program->Use();
-  glUniform4f(loc, 1.0f, 1.0f, 0.0f, 1.0f);
-  glClearColor(0.0f, 0.1f, 0.2f, 0.0f);
+  auto loc = glGetUniformLocation(m_program->Get(), "color");
+  m_program->Use();
+    glUniform4f(loc, 1.0f, 1.0f, 0.0f, 1.0f);
+    glClearColor(0.0f, 0.1f, 0.2f, 0.0f);
 
-  return true;
+
+    
+        auto image = Image::Load("./image/container.jpg");
+        if (!image) 
+        return false;
+        SPDLOG_INFO("image: {}x{}, {} channels",
+        image->GetWidth(), image->GetHeight(), image->GetChannelCount());
+      
+    m_texture = Texture::CreateFromImage(image.get());
+
+    auto image2 = Image::Load("./image/awesomeface.png");
+    m_texture2 = Texture::CreateFromImage(image2.get());
+
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, m_texture->Get());
+    glActiveTexture(GL_TEXTURE1);
+    glBindTexture(GL_TEXTURE_2D, m_texture2->Get());
+
+    m_program->Use();
+    glUniform1i(glGetUniformLocation(m_program->Get(), "tex"), 0);
+    glUniform1i(glGetUniformLocation(m_program->Get(), "tex2"), 1);
+
+    return true;
 }
 
 void Context::Render() {
   glClear(GL_COLOR_BUFFER_BIT);
-
-  /*static float time = 0.0f;
-  float t = sinf(time) * 0.5f + 0.5f;
-  auto loc = glGetUniformLocation(m_program->Get(), "color");*/
   m_program->Use();
-  //glUniform4f(loc, t*t, 2.0f*t*(1.0f-t), (1.0f-t)*(1.0f-t), 1.0f);
   glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
-
-  //time += 0.016f;
-//  m_program->Use();
-// glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 }
