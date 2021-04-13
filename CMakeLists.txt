@@ -2,7 +2,7 @@ set(PROJECT_NAME opengl_exameple)
 set(CMAKE_CXX_STANDARD 17)
 
 	
-set(WINDOW_NAME "opengl Exameple")
+set(WINDOW_NAME "OpenGL Exameple")
 set(WINDOW_WIDTH 960)
 set(WINDOW_HEIGHT 540)
 
