@@ -10,7 +10,7 @@
 CLASS_PTR(Model);
 class Model {
 public:
-    static ModelUPtr Load(const std::string& filename);
+    static ModelUPtr Load(const std::string& filename, bool flipVertical = true);
 
     int GetMeshCount() const { return (int)m_meshes.size(); }
     MeshPtr GetMesh(int index) const { return m_meshes[index]; }
@@ -18,7 +18,7 @@ public:
 
 private:
     Model() {}
-    bool LoadByAssimp(const std::string& filename);
+    bool LoadByAssimp(const std::string& filename, bool flipVertical);
     void ProcessMesh(aiMesh* mesh, const aiScene* scene);
     void ProcessNode(aiNode* node, const aiScene* scene);
 

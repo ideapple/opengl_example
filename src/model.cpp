@@ -1,13 +1,13 @@
 #include "model.h"
 
-ModelUPtr Model::Load(const std::string& filename) {
+ModelUPtr Model::Load(const std::string& filename, bool flipVertical) {
     auto model = ModelUPtr(new Model());
-    if (!model->LoadByAssimp(filename))
+    if (!model->LoadByAssimp(filename, flipVertical))
         return nullptr;
     return std::move(model);
 }
 
-bool Model::LoadByAssimp(const std::string& filename) {
+bool Model::LoadByAssimp(const std::string& filename, bool flipVertical) {
     Assimp::Importer importer;
     auto scene = importer.ReadFile(filename, aiProcess_Triangulate | aiProcess_FlipUVs);
 
@@ -16,18 +16,18 @@ bool Model::LoadByAssimp(const std::string& filename) {
         return false;
     }
 
-    auto dirname = filename.substr(0, filename.find_last_of("/"));
+auto dirname = filename.substr(0, filename.find_last_of("/"));
     auto LoadTexture = [&](aiMaterial* material, aiTextureType type) -> TexturePtr {
         if (material->GetTextureCount(type) <= 0)
             return nullptr;
         aiString filepath;
         material->GetTexture(aiTextureType_DIFFUSE, 0, &filepath);
-        auto image = Image::Load(fmt::format("{}/{}", dirname, filepath.C_Str()));
+        auto image = Image::Load(fmt::format("{}/{}", dirname, filepath.C_Str()), flipVertical);
         if (!image)
             return nullptr;
         return Texture::CreateFromImage(image.get());
-    }; // Λ Closure capture
-
+    };
+    
     for (uint32_t i = 0; i < scene->mNumMaterials; i++) {
         auto material = scene->mMaterials[i];
         auto glMaterial = Material::Create();
@@ -35,6 +35,7 @@ bool Model::LoadByAssimp(const std::string& filename) {
         glMaterial->specular = LoadTexture(material, aiTextureType_SPECULAR);
         m_materials.push_back(std::move(glMaterial));
     }
+
     ProcessNode(scene->mRootNode, scene);
     return true;
 }
